@@ -1,3 +1,4 @@
+import UsdcBalance from './components/UsdcBalance'
 import ConnectWallet from './components/ConnectWallet'
 import './App.css'
 
@@ -28,6 +29,9 @@ function App() {
           communities, hackathon winners, contributors, and
           organizations in one streamlined transaction.
         </p>
+        <div className="hero-balance">
+  <UsdcBalance />
+</div>
 
         <div className="features">
           <div className="feature">

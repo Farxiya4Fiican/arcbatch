@@ -1,0 +1,6 @@
+export const USDC_ADDRESS =
+  '0x3600000000000000000000000000000000000000' as const
+
+export const USDC_DECIMALS = 6
+
+export const USDC_SYMBOL = 'USDC'
