@@ -1,5 +1,6 @@
 import ConnectWallet from './components/ConnectWallet'
 import UsdcBalance from './components/UsdcBalance'
+import BatchPaymentForm from './components/BatchPaymentForm'
 import './App.css'
 
 function App() {
@@ -67,83 +68,7 @@ function App() {
             </div>
           </div>
 
-          <section className="card payment-card">
-            <div className="card-header">
-              <div>
-                <span className="section-icon">▣</span>
-                <h2>New batch payment</h2>
-              </div>
-            </div>
-
-            <div className="payment-table">
-              <div className="payment-head">
-                <span>#</span>
-                <span>Recipient address</span>
-                <span>Amount (USDC)</span>
-                <span />
-              </div>
-
-              {[1, 2, 3].map((row) => (
-                <div className="payment-row" key={row}>
-                  <span>{row}</span>
-
-                  <input
-                    type="text"
-                    placeholder="0x..."
-                    aria-label={`Recipient ${row} address`}
-                  />
-
-                  <div className="amount-field">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      aria-label={`Recipient ${row} amount`}
-                    />
-                    <span>USDC</span>
-                  </div>
-
-                  <button
-                    className="icon-button"
-                    type="button"
-                    aria-label={`Remove recipient ${row}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="payment-actions">
-              <div className="secondary-actions">
-                <button className="outline-button">
-                  + Add recipient
-                </button>
-
-                <button className="outline-button">
-                  Import CSV
-                </button>
-              </div>
-
-              <div className="totals">
-                <span>
-                  Recipients: <strong>0</strong>
-                </span>
-
-                <span className="divider" />
-
-                <span>
-                  Total: <strong>0.00 USDC</strong>
-                </span>
-              </div>
-            </div>
-
-            <button className="primary-action">
-              Review batch
-              <span>→</span>
-            </button>
-          </section>
+        <BatchPaymentForm />
 
           <section className="card recent-card">
             <div className="card-header">
