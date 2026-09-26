@@ -1,9 +1,18 @@
 import { createConfig, http } from 'wagmi'
-import { metaMask } from 'wagmi/connectors'
+import { injected } from 'wagmi/connectors'
 import { defineChain } from 'viem'
+
+const arcRpcUrl = import.meta.env.VITE_ARC_RPC_URL
+
+if (!arcRpcUrl) {
+  throw new Error(
+    'VITE_ARC_RPC_URL is not configured',
+  )
+}
 
 export const arcTestnet = defineChain({
   id: 5042002,
+
   name: 'Arc Network Testnet',
 
   nativeCurrency: {
@@ -14,9 +23,7 @@ export const arcTestnet = defineChain({
 
   rpcUrls: {
     default: {
-      http: [
-        'https://rpc.solidrpc.io/public/evm/5042002',
-      ],
+      http: [arcRpcUrl],
     },
   },
 
@@ -34,12 +41,10 @@ export const wagmiConfig = createConfig({
   chains: [arcTestnet],
 
   connectors: [
-    metaMask(),
+    injected(),
   ],
 
   transports: {
-    [arcTestnet.id]: http(
-      'https://rpc.solidrpc.io/public/evm/5042002',
-    ),
+    [arcTestnet.id]: http(arcRpcUrl),
   },
 })

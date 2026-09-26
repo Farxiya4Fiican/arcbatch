@@ -944,3 +944,19 @@ button {
   cursor: not-allowed;
   transform: none;
 }
+
+.transaction-error {
+  margin: 10px 0 0;
+  color: #dc2626;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.transaction-success {
+  margin: 10px 0 0;
+  color: #15803d;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
