@@ -11,17 +11,20 @@ export function useBatchPayment() {
     const {
         writeContract,
         data: transactionHash,
-        error,
-        isPending,
+        error: writeError,
+        isPending: isWritePending,
+        reset,
     } = useWriteContract()
 
     const {
+        data: receipt,
+        error: receiptError,
         isLoading: isConfirming,
         isSuccess: isConfirmed,
-        data: receipt,
     } = useWaitForTransactionReceipt({
         hash: transactionHash,
         chainId: arcTestnet.id,
+        confirmations: 1,
         query: {
             enabled: Boolean(transactionHash),
         },
@@ -47,12 +50,19 @@ export function useBatchPayment() {
         sendBatch,
 
         transactionHash,
-        error,
+        receipt,
 
-        isPending,
+        error:
+            writeError ??
+            receiptError,
+
+        isPending:
+            isWritePending,
+
         isConfirming,
+
         isConfirmed,
 
-        receipt,
+        reset,
     }
 }

@@ -1,18 +1,27 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 
-import { useQueryClient } from '@tanstack/react-query'
+import {
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import {
   isAddress,
   parseUnits,
 } from 'viem'
 
-import { useUsdcApproval } from '../hooks/useUsdcApproval'
-import { useBatchPayment } from '../hooks/useBatchPayment'
+import {
+  useUsdcApproval,
+} from '../hooks/useUsdcApproval'
+
+import {
+  useBatchPayment,
+} from '../hooks/useBatchPayment'
+
 
 import {
   USDC_DECIMALS,
@@ -24,16 +33,37 @@ type Recipient = {
   amount: string
 }
 
-export default function BatchPaymentForm() {
-  const queryClient = useQueryClient()
+type PendingBatch = {
+  recipientCount: number
+  totalAmount: string
+}
 
-  const [recipients, setRecipients] = useState<Recipient[]>([
+export default function BatchPaymentForm() {
+  const queryClient =
+    useQueryClient()
+
+  const [
+    recipients,
+    setRecipients,
+  ] = useState<Recipient[]>([
     {
       id: 1,
       address: '',
       amount: '',
     },
   ])
+
+  /*
+   * We use a ref instead of state.
+   *
+   * This prevents the pending batch
+   * information from being lost during
+   * transaction confirmation/reset.
+   */
+  const pendingBatchRef =
+    useRef<PendingBatch | null>(
+      null,
+    )
 
   const addRecipient = () => {
     setRecipients((current) => [
@@ -46,14 +76,17 @@ export default function BatchPaymentForm() {
     ])
   }
 
-  const removeRecipient = (id: number) => {
+  const removeRecipient = (
+    id: number,
+  ) => {
     setRecipients((current) => {
       if (current.length === 1) {
         return current
       }
 
       return current.filter(
-        (recipient) => recipient.id !== id,
+        (recipient) =>
+          recipient.id !== id,
       )
     })
   }
@@ -75,47 +108,68 @@ export default function BatchPaymentForm() {
     )
   }
 
-  const hasErrors = recipients.some(
-    (recipient) => {
-      const amount =
-        Number(recipient.amount)
-
-      return (
-        !isAddress(recipient.address) ||
-        !Number.isFinite(amount) ||
-        amount <= 0
-      )
-    },
-  )
-
-  const totalAmount = useMemo(() => {
-    return recipients.reduce(
-      (total, recipient) => {
+  const hasErrors =
+    recipients.some(
+      (recipient) => {
         const amount =
-          Number(recipient.amount)
+          Number(
+            recipient.amount,
+          )
 
-        if (!Number.isFinite(amount)) {
-          return total
-        }
-
-        return total + amount
+        return (
+          !isAddress(
+            recipient.address,
+          ) ||
+          !Number.isFinite(
+            amount,
+          ) ||
+          amount <= 0
+        )
       },
-      0,
     )
-  }, [recipients])
 
-  const requiredAmount = useMemo(() => {
-    try {
-      return parseUnits(
-        totalAmount.toFixed(
-          USDC_DECIMALS,
-        ),
-        USDC_DECIMALS,
+  const totalAmount =
+    useMemo(() => {
+      return recipients.reduce(
+        (
+          total,
+          recipient,
+        ) => {
+          const amount =
+            Number(
+              recipient.amount,
+            )
+
+          if (
+            !Number.isFinite(
+              amount,
+            )
+          ) {
+            return total
+          }
+
+          return (
+            total +
+            amount
+          )
+        },
+        0,
       )
-    } catch {
-      return 0n
-    }
-  }, [totalAmount])
+    }, [recipients])
+
+  const requiredAmount =
+    useMemo(() => {
+      try {
+        return parseUnits(
+          totalAmount.toFixed(
+            USDC_DECIMALS,
+          ),
+          USDC_DECIMALS,
+        )
+      } catch {
+        return 0n
+      }
+    }, [totalAmount])
 
   const {
     needsApproval,
@@ -141,17 +195,27 @@ export default function BatchPaymentForm() {
 
     error: batchError,
 
-    isPending: isBatchPending,
-    isConfirming: isBatchConfirming,
-    isConfirmed: isBatchConfirmed,
+    isPending:
+    isBatchPending,
+
+    isConfirming:
+    isBatchConfirming,
+
+    isConfirmed:
+    isBatchConfirmed,
+
+    reset:
+    resetBatchTransaction,
   } = useBatchPayment()
 
   /*
-   * When approval is confirmed,
-   * refresh the current USDC allowance.
+   * Refresh allowance after an
+   * approval transaction confirms.
    */
   useEffect(() => {
-    if (!isApprovalConfirmed) {
+    if (
+      !isApprovalConfirmed
+    ) {
       return
     }
 
@@ -162,22 +226,68 @@ export default function BatchPaymentForm() {
   ])
 
   /*
-   * When batch transaction is confirmed:
+   * IMPORTANT:
    *
-   * 1. Refresh blockchain queries
-   * 2. Refresh wallet balance
-   * 3. Refresh allowance
-   * 4. Reset the form
+   * This must be the ONLY effect in
+   * this file that handles a confirmed
+   * batch transaction.
    */
   useEffect(() => {
-    if (!isBatchConfirmed) {
+    if (
+      !isBatchConfirmed ||
+      !transactionHash
+    ) {
       return
     }
 
-    queryClient.invalidateQueries()
+    const pendingBatch =
+      pendingBatchRef.current
+
+    if (!pendingBatch) {
+      console.error(
+        'Batch confirmed but pending batch data is missing.',
+      )
+
+      return
+    }
+
+    console.log(
+      'Batch confirmed:',
+      transactionHash,
+    )
+
+    console.log(
+      'Saving recent batch:',
+      pendingBatch,
+    )
+
+    /*
+     * Save to localStorage BEFORE
+     * resetting anything.
+     */
+
+    /*
+     * Verify immediately that
+     * localStorage contains it.
+     */
+    console.log(
+      'Stored history:',
+      localStorage.getItem(
+        'arcbatch-recent-batches',
+      ),
+    )
+
+    /*
+     * Refresh blockchain values.
+     */
+    queryClient
+      .invalidateQueries()
 
     refetchAllowance()
 
+    /*
+     * Reset payment form.
+     */
     setRecipients([
       {
         id: Date.now(),
@@ -185,40 +295,72 @@ export default function BatchPaymentForm() {
         amount: '',
       },
     ])
+
+    /*
+     * Clear pending batch only AFTER
+     * it has been saved.
+     */
+    pendingBatchRef.current =
+      null
+
+    /*
+     * Reset Wagmi transaction state.
+     */
+    resetBatchTransaction()
   }, [
     isBatchConfirmed,
+    transactionHash,
     queryClient,
     refetchAllowance,
+    resetBatchTransaction,
   ])
 
-  const handleBatchPayment = () => {
-    if (
-      hasErrors ||
-      totalAmount <= 0
-    ) {
-      return
+  const handleBatchPayment =
+    () => {
+      if (
+        hasErrors ||
+        totalAmount <= 0
+      ) {
+        return
+      }
+
+      const recipientAddresses =
+        recipients.map(
+          (recipient) =>
+            recipient.address as `0x${string}`,
+        )
+
+      const amounts =
+        recipients.map(
+          (recipient) =>
+            parseUnits(
+              recipient.amount,
+              USDC_DECIMALS,
+            ),
+        )
+
+      /*
+       * Save the batch information
+       * BEFORE calling MetaMask.
+       */
+      pendingBatchRef.current = {
+        recipientCount:
+          recipients.length,
+
+        totalAmount:
+          totalAmount.toString(),
+      }
+
+      console.log(
+        'Pending batch created:',
+        pendingBatchRef.current,
+      )
+
+      sendBatch(
+        recipientAddresses,
+        amounts,
+      )
     }
-
-    const recipientAddresses =
-      recipients.map(
-        (recipient) =>
-          recipient.address as `0x${string}`,
-      )
-
-    const amounts =
-      recipients.map(
-        (recipient) =>
-          parseUnits(
-            recipient.amount,
-            USDC_DECIMALS,
-          ),
-      )
-
-    sendBatch(
-      recipientAddresses,
-      amounts,
-    )
-  }
 
   const isBusy =
     isAllowanceLoading ||
@@ -243,7 +385,9 @@ export default function BatchPaymentForm() {
 
       <div className="payment-table">
         <div className="payment-head">
-          <span>#</span>
+          <span>
+            #
+          </span>
 
           <span>
             Recipient address
@@ -257,7 +401,10 @@ export default function BatchPaymentForm() {
         </div>
 
         {recipients.map(
-          (recipient, index) => {
+          (
+            recipient,
+            index,
+          ) => {
             const amount =
               Number(
                 recipient.amount,
@@ -285,7 +432,9 @@ export default function BatchPaymentForm() {
             return (
               <div
                 className="payment-row"
-                key={recipient.id}
+                key={
+                  recipient.id
+                }
               >
                 <span>
                   {index + 1}
@@ -296,6 +445,9 @@ export default function BatchPaymentForm() {
                   placeholder="0x..."
                   value={
                     recipient.address
+                  }
+                  disabled={
+                    isBusy
                   }
                   className={
                     addressInvalid
@@ -322,6 +474,9 @@ export default function BatchPaymentForm() {
                     value={
                       recipient.amount
                     }
+                    disabled={
+                      isBusy
+                    }
                     className={
                       amountInvalid
                         ? 'input-error'
@@ -347,7 +502,8 @@ export default function BatchPaymentForm() {
                   type="button"
                   className="icon-button"
                   disabled={
-                    recipients.length === 1 ||
+                    recipients.length ===
+                    1 ||
                     isBusy
                   }
                   onClick={() =>
@@ -373,7 +529,9 @@ export default function BatchPaymentForm() {
           <button
             type="button"
             className="outline-button"
-            disabled={isBusy}
+            disabled={
+              isBusy
+            }
             onClick={
               addRecipient
             }
@@ -384,7 +542,9 @@ export default function BatchPaymentForm() {
           <button
             type="button"
             className="outline-button"
-            disabled={isBusy}
+            disabled={
+              isBusy
+            }
           >
             Import CSV
           </button>
@@ -393,6 +553,7 @@ export default function BatchPaymentForm() {
         <div className="totals">
           <span>
             Recipients:{' '}
+
             <strong>
               {
                 recipients.length
@@ -404,6 +565,7 @@ export default function BatchPaymentForm() {
 
           <span>
             Total:{' '}
+
             <strong>
               {
                 totalAmount.toFixed(
@@ -486,7 +648,9 @@ export default function BatchPaymentForm() {
       {transactionHash &&
         !isBatchConfirmed && (
           <p className="transaction-success">
-            Transaction submitted:{' '}
+            Transaction
+            submitted:{' '}
+
             {
               transactionHash.slice(
                 0,
@@ -496,13 +660,6 @@ export default function BatchPaymentForm() {
             ...
           </p>
         )}
-
-      {isBatchConfirmed && (
-        <p className="transaction-success">
-          Batch payment confirmed
-          successfully.
-        </p>
-      )}
     </section>
   )
 }

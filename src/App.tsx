@@ -1,6 +1,7 @@
 import ConnectWallet from './components/ConnectWallet'
 import UsdcBalance from './components/UsdcBalance'
 import BatchPaymentForm from './components/BatchPaymentForm'
+import RecentBatches from './components/RecentBatches'
 import './App.css'
 
 function App() {
@@ -68,30 +69,9 @@ function App() {
             </div>
           </div>
 
-        <BatchPaymentForm />
+          <BatchPaymentForm />
 
-          <section className="card recent-card">
-            <div className="card-header">
-              <div>
-                <span className="section-icon">↻</span>
-                <h2>Recent batches</h2>
-              </div>
-            </div>
-
-            <div className="recent-head">
-              <span>Date</span>
-              <span>Recipients</span>
-              <span>Total (USDC)</span>
-              <span>Status</span>
-              <span>Transaction</span>
-            </div>
-
-            <div className="empty-state">
-              <div className="empty-icon">▤</div>
-              <strong>No batches yet</strong>
-              <span>Create your first batch payment to get started.</span>
-            </div>
-          </section>
+          <RecentBatches />
         </section>
 
         <aside className="sidebar">

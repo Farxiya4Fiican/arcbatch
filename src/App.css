@@ -960,3 +960,97 @@ button {
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.recent-card {
+  margin-top: 20px;
+}
+
+.recent-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.recent-table {
+  min-width: 760px;
+}
+
+.recent-head,
+.recent-row {
+  display: grid;
+  grid-template-columns:
+    1.5fr 0.7fr 0.9fr 0.8fr 1fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.recent-head {
+  padding: 16px 4px 12px;
+  border-bottom: 1px solid #e6edf7;
+  color: #71809a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recent-row {
+  padding: 16px 4px;
+  border-bottom: 1px solid #eef3f8;
+  color: #24324a;
+  font-size: 13px;
+}
+
+.recent-row:last-child {
+  border-bottom: 0;
+}
+
+.recent-message {
+  padding: 28px 0 12px;
+  color: #71809a;
+  font-size: 14px;
+  text-align: center;
+}
+
+.recent-message.error {
+  color: #dc2626;
+}
+
+.status-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #eaf9ef;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.transaction-link {
+  color: #246fe5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.transaction-link:hover {
+  text-decoration: underline;
+}
+
+.refresh-button {
+  border: 1px solid #dce6f3;
+  background: #ffffff;
+  color: #246fe5;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.refresh-button:hover {
+  background: #f6f9fd;
+}
+
+.refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

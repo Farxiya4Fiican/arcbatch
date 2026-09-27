@@ -2,13 +2,17 @@ import { createConfig, http } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 import { defineChain } from 'viem'
 
-const arcRpcUrl = import.meta.env.VITE_ARC_RPC_URL
+const alchemyApiKey =
+  import.meta.env.VITE_ALCHEMY_API_KEY
 
-if (!arcRpcUrl) {
+if (!alchemyApiKey) {
   throw new Error(
-    'VITE_ARC_RPC_URL is not configured',
+    'VITE_ALCHEMY_API_KEY is not configured',
   )
 }
+
+const arcRpcUrl =
+  `https://arc-testnet.g.alchemy.com/v2/${alchemyApiKey}`
 
 export const arcTestnet = defineChain({
   id: 5042002,
@@ -38,13 +42,17 @@ export const arcTestnet = defineChain({
 })
 
 export const wagmiConfig = createConfig({
-  chains: [arcTestnet],
+  chains: [
+    arcTestnet,
+  ],
 
   connectors: [
     injected(),
   ],
 
   transports: {
-    [arcTestnet.id]: http(arcRpcUrl),
+    [arcTestnet.id]: http(
+      arcRpcUrl,
+    ),
   },
 })
