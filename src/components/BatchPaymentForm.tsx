@@ -47,14 +47,24 @@ export default function BatchPaymentForm() {
   ])
 
   const addRecipient = () => {
-    setRecipients((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        address: '',
-        amount: '',
-      },
-    ])
+    setRecipients((current) => {
+      if (current.length >= 100) {
+        alert(
+          'A batch can contain a maximum of 100 recipients.',
+        )
+
+        return current
+      }
+
+      return [
+        ...current,
+        {
+          id: Date.now(),
+          address: '',
+          amount: '',
+        },
+      ]
+    })
   }
 
   const removeRecipient = (
@@ -455,10 +465,24 @@ export default function BatchPaymentForm() {
 
   const hasErrors =
     recipients.some(
-      (recipient) => {
+      (recipient, index) => {
         const amount =
           Number(
             recipient.amount,
+          )
+
+        const duplicateAddress =
+          recipients.some(
+            (
+              otherRecipient,
+              otherIndex,
+            ) =>
+              otherIndex !== index &&
+              recipient.address !== '' &&
+              otherRecipient.address
+                .toLowerCase() ===
+              recipient.address
+                .toLowerCase(),
           )
 
         return (
@@ -468,7 +492,8 @@ export default function BatchPaymentForm() {
           !Number.isFinite(
             amount,
           ) ||
-          amount <= 0
+          amount <= 0 ||
+          duplicateAddress
         )
       },
     )
@@ -719,6 +744,22 @@ export default function BatchPaymentForm() {
                 amount <= 0
               )
 
+            const duplicateAddress =
+              Boolean(
+                recipient.address,
+              ) &&
+              recipients.some(
+                (
+                  otherRecipient,
+                  otherIndex,
+                ) =>
+                  otherIndex !== index &&
+                  otherRecipient.address
+                    .toLowerCase() ===
+                  recipient.address
+                    .toLowerCase(),
+              )
+
             return (
               <div
                 className="payment-row"
@@ -730,62 +771,74 @@ export default function BatchPaymentForm() {
                   {index + 1}
                 </span>
 
-                <input
-                  type="text"
-                  placeholder="0x..."
-                  value={
-                    recipient.address
-                  }
-                  disabled={
-                    isBusy
-                  }
-                  className={
-                    addressInvalid
-                      ? 'input-error'
-                      : ''
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    updateRecipient(
-                      recipient.id,
-                      'address',
-                      event.target.value,
-                    )
-                  }
-                />
-
-                <div className="amount-field">
+                <div className="field-wrapper">
                   <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={
-                      recipient.amount
-                    }
-                    disabled={
-                      isBusy
-                    }
+                    type="text"
+                    placeholder="0x..."
+                    value={recipient.address}
+                    disabled={isBusy}
                     className={
-                      amountInvalid
+                      addressInvalid ||
+                        duplicateAddress
                         ? 'input-error'
                         : ''
                     }
-                    onChange={(
-                      event,
-                    ) =>
+                    onChange={(event) =>
                       updateRecipient(
                         recipient.id,
-                        'amount',
+                        'address',
                         event.target.value,
                       )
                     }
                   />
 
-                  <span>
-                    USDC
-                  </span>
+                  {addressInvalid && (
+                    <span className="field-error">
+                      Invalid wallet address
+                    </span>
+                  )}
+
+                  {!addressInvalid &&
+                    duplicateAddress && (
+                      <span className="field-error">
+                        Duplicate wallet address
+                      </span>
+                    )}
+                </div>
+
+                <div className="field-wrapper">
+                  <div className="amount-field">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={recipient.amount}
+                      disabled={isBusy}
+                      className={
+                        amountInvalid
+                          ? 'input-error'
+                          : ''
+                      }
+                      onChange={(event) =>
+                        updateRecipient(
+                          recipient.id,
+                          'amount',
+                          event.target.value,
+                        )
+                      }
+                    />
+
+                    <span>
+                      USDC
+                    </span>
+                  </div>
+
+                  {amountInvalid && (
+                    <span className="field-error">
+                      Amount must be greater than 0
+                    </span>
+                  )}
                 </div>
 
                 <button
@@ -820,7 +873,8 @@ export default function BatchPaymentForm() {
             type="button"
             className="outline-button"
             disabled={
-              isBusy
+              isBusy ||
+              recipients.length >= 100
             }
             onClick={
               addRecipient
@@ -886,9 +940,13 @@ export default function BatchPaymentForm() {
           type="button"
           className="primary-action"
           disabled={
+            hasErrors ||
+            totalAmount <= 0 ||
             isAllowanceLoading ||
             isApprovalPending ||
-            isApprovalConfirming
+            isApprovalConfirming ||
+            isBatchPending ||
+            isBatchConfirming
           }
           onClick={
             approve
@@ -908,7 +966,10 @@ export default function BatchPaymentForm() {
           className="primary-action"
           disabled={
             hasErrors ||
+            totalAmount <= 0 ||
             isAllowanceLoading ||
+            isApprovalPending ||
+            isApprovalConfirming ||
             isBatchPending ||
             isBatchConfirming
           }
