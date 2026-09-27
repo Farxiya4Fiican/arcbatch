@@ -42,9 +42,13 @@ type ArcTransaction = {
     hash: `0x${string}`
     from: `0x${string}`
     to: `0x${string}`
-    input?: `0x${string}` | ''
+
+    input?:
+    | `0x${string}`
+    | ''
 
     isError?: string
+
     txreceipt_status?: string
 }
 
@@ -76,7 +80,8 @@ type RawTransactionResponse = {
 
 export function useRecentBatches() {
     const {
-        address: walletAddress,
+        address:
+        walletAddress,
     } = useAccount()
 
     const [
@@ -122,6 +127,7 @@ export function useRecentBatches() {
             if (!walletAddress) {
                 setBatches([])
                 setIsLoading(false)
+
                 return
             }
 
@@ -130,13 +136,16 @@ export function useRecentBatches() {
                 setError(null)
 
                 /*
-                 * Query ALL normal transactions
-                 * for the connected wallet.
+                 * Read wallet transaction
+                 * history from ArcScan.
                  */
                 const params =
                     new URLSearchParams({
-                        module: 'account',
-                        action: 'txlist',
+                        module:
+                            'account',
+
+                        action:
+                            'txlist',
 
                         address:
                             walletAddress,
@@ -177,7 +186,8 @@ export function useRecentBatches() {
                     )
                 ) {
                     if (
-                        data.status === '0'
+                        data.status ===
+                        '0'
                     ) {
                         setBatches([])
                         return
@@ -194,12 +204,16 @@ export function useRecentBatches() {
                 const recentBatches:
                     RecentBatch[] = []
 
+                /*
+                 * Examine each transaction
+                 * sent by this wallet.
+                 */
                 for (
                     const transaction of
                     data.result
                 ) {
                     /*
-                     * Only transactions SENT BY
+                     * Only transactions sent BY
                      * the connected wallet.
                      */
                     if (
@@ -212,7 +226,7 @@ export function useRecentBatches() {
                     }
 
                     /*
-                     * Skip failed transactions.
+                     * Ignore failed transactions.
                      */
                     if (
                         transaction.isError ===
@@ -225,8 +239,8 @@ export function useRecentBatches() {
                     }
 
                     /*
-                     * Contract interactions have
-                     * a destination and calldata.
+                     * A contract interaction
+                     * must have a destination.
                      */
                     if (
                         !transaction.to
@@ -235,6 +249,10 @@ export function useRecentBatches() {
                     }
 
                     try {
+                        /*
+                         * Get complete calldata
+                         * from the raw transaction.
+                         */
                         const raw =
                             await getRawTransaction(
                                 transaction.hash,
@@ -259,13 +277,13 @@ export function useRecentBatches() {
                         }
 
                         /*
-                         * Try to decode as ArcBatch
-                         * batchPay().
+                         * Try decoding this
+                         * interaction as:
                          *
-                         * If the contract address changed
-                         * between deployments, this still
-                         * works as long as the function ABI
-                         * is the same.
+                         * batchPay(
+                         *   address[],
+                         *   uint256[]
+                         * )
                          */
                         const decoded =
                             decodeFunctionData({
@@ -336,14 +354,16 @@ export function useRecentBatches() {
                         })
                     } catch {
                         /*
-                         * Not every contract interaction
-                         * is an ArcBatch batchPay call.
-                         * Ignore other contract methods.
+                         * Other contract interactions
+                         * are not ArcBatch batchPay().
                          */
                         continue
                     }
                 }
 
+                /*
+                 * Newest first.
+                 */
                 recentBatches.sort(
                     (
                         a,
@@ -380,8 +400,85 @@ export function useRecentBatches() {
             getRawTransaction,
         ])
 
+    /*
+     * Initial load and wallet change.
+     */
     useEffect(() => {
         fetchBatches()
+    }, [
+        fetchBatches,
+    ])
+
+    /*
+     * Automatically refresh after
+     * BatchPaymentForm confirms
+     * a new batch transaction.
+     *
+     * ArcScan indexing can be slightly
+     * delayed, so retry a few times.
+     */
+    useEffect(() => {
+        let retryOne:
+            ReturnType<
+                typeof setTimeout
+            > | undefined
+
+        let retryTwo:
+            ReturnType<
+                typeof setTimeout
+            > | undefined
+
+        const handleBatchCreated =
+            () => {
+                /*
+                 * Try immediately.
+                 */
+                fetchBatches()
+
+                /*
+                 * Retry after ArcScan has
+                 * had time to index the tx.
+                 */
+                retryOne =
+                    setTimeout(
+                        () => {
+                            fetchBatches()
+                        },
+                        2500,
+                    )
+
+                retryTwo =
+                    setTimeout(
+                        () => {
+                            fetchBatches()
+                        },
+                        6000,
+                    )
+            }
+
+        window.addEventListener(
+            'arcbatch-batch-created',
+            handleBatchCreated,
+        )
+
+        return () => {
+            window.removeEventListener(
+                'arcbatch-batch-created',
+                handleBatchCreated,
+            )
+
+            if (retryOne) {
+                clearTimeout(
+                    retryOne,
+                )
+            }
+
+            if (retryTwo) {
+                clearTimeout(
+                    retryTwo,
+                )
+            }
+        }
     }, [
         fetchBatches,
     ])

@@ -1,7 +1,6 @@
 import {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react'
 
@@ -22,7 +21,6 @@ import {
   useBatchPayment,
 } from '../hooks/useBatchPayment'
 
-
 import {
   USDC_DECIMALS,
 } from '../config/tokens'
@@ -31,11 +29,6 @@ type Recipient = {
   id: number
   address: string
   amount: string
-}
-
-type PendingBatch = {
-  recipientCount: number
-  totalAmount: string
 }
 
 export default function BatchPaymentForm() {
@@ -52,18 +45,6 @@ export default function BatchPaymentForm() {
       amount: '',
     },
   ])
-
-  /*
-   * We use a ref instead of state.
-   *
-   * This prevents the pending batch
-   * information from being lost during
-   * transaction confirmation/reset.
-   */
-  const pendingBatchRef =
-    useRef<PendingBatch | null>(
-      null,
-    )
 
   const addRecipient = () => {
     setRecipients((current) => [
@@ -209,8 +190,8 @@ export default function BatchPaymentForm() {
   } = useBatchPayment()
 
   /*
-   * Refresh allowance after an
-   * approval transaction confirms.
+   * Refresh USDC allowance
+   * after approval confirms.
    */
   useEffect(() => {
     if (
@@ -226,11 +207,11 @@ export default function BatchPaymentForm() {
   ])
 
   /*
-   * IMPORTANT:
+   * Successful batch transaction.
    *
-   * This must be the ONLY effect in
-   * this file that handles a confirmed
-   * batch transaction.
+   * Refresh blockchain data,
+   * tell RecentBatches to reload,
+   * then reset the form.
    */
   useEffect(() => {
     if (
@@ -240,54 +221,26 @@ export default function BatchPaymentForm() {
       return
     }
 
-    const pendingBatch =
-      pendingBatchRef.current
-
-    if (!pendingBatch) {
-      console.error(
-        'Batch confirmed but pending batch data is missing.',
-      )
-
-      return
-    }
-
-    console.log(
-      'Batch confirmed:',
-      transactionHash,
-    )
-
-    console.log(
-      'Saving recent batch:',
-      pendingBatch,
-    )
-
-    /*
-     * Save to localStorage BEFORE
-     * resetting anything.
-     */
-
-    /*
-     * Verify immediately that
-     * localStorage contains it.
-     */
-    console.log(
-      'Stored history:',
-      localStorage.getItem(
-        'arcbatch-recent-batches',
-      ),
-    )
-
-    /*
-     * Refresh blockchain values.
-     */
     queryClient
       .invalidateQueries()
 
     refetchAllowance()
 
     /*
-     * Reset payment form.
+     * Tell useRecentBatches()
+     * that a new batch was confirmed.
      */
+    window.dispatchEvent(
+      new CustomEvent(
+        'arcbatch-batch-created',
+        {
+          detail: {
+            transactionHash,
+          },
+        },
+      ),
+    )
+
     setRecipients([
       {
         id: Date.now(),
@@ -296,16 +249,6 @@ export default function BatchPaymentForm() {
       },
     ])
 
-    /*
-     * Clear pending batch only AFTER
-     * it has been saved.
-     */
-    pendingBatchRef.current =
-      null
-
-    /*
-     * Reset Wagmi transaction state.
-     */
     resetBatchTransaction()
   }, [
     isBatchConfirmed,
@@ -338,23 +281,6 @@ export default function BatchPaymentForm() {
               USDC_DECIMALS,
             ),
         )
-
-      /*
-       * Save the batch information
-       * BEFORE calling MetaMask.
-       */
-      pendingBatchRef.current = {
-        recipientCount:
-          recipients.length,
-
-        totalAmount:
-          totalAmount.toString(),
-      }
-
-      console.log(
-        'Pending batch created:',
-        pendingBatchRef.current,
-      )
 
       sendBatch(
         recipientAddresses,
