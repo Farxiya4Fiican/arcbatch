@@ -1,28 +1,140 @@
-import ConnectWallet from './components/ConnectWallet'
-import UsdcBalance from './components/UsdcBalance'
-import BatchPaymentForm from './components/BatchPaymentForm'
-import RecentBatches from './components/RecentBatches'
+import {
+  useState,
+} from 'react'
+
+import {
+  useAccount,
+} from 'wagmi'
+
 import './App.css'
 
-function App() {
+import BatchPaymentForm from './components/BatchPaymentForm'
+import ConnectWallet from './components/ConnectWallet'
+import RecentBatches from './components/RecentBatches'
+import Recipients from './components/Recipients'
+import UsdcBalance from './components/UsdcBalance'
+
+import {
+  USDC_ADDRESS,
+} from './config/tokens'
+
+type Page =
+  | 'home'
+  | 'batches'
+  | 'recipients'
+  | 'settings'
+
+const ARC_EXPLORER_URL =
+  'https://explorer.testnet.arc.io'
+
+const CIRCLE_FAUCET_URL =
+  'https://faucet.circle.com/'
+
+export default function App() {
+  const [
+    activePage,
+    setActivePage,
+  ] = useState<Page>('home')
+
+  const {
+    address,
+    isConnected,
+  } = useAccount()
+
+  const shortenAddress = (
+    value?: string,
+  ) => {
+    if (!value) {
+      return ''
+    }
+
+    return `${value.slice(
+      0,
+      6,
+    )}...${value.slice(-4)}`
+  }
+
+  const copyAddress = async () => {
+    if (!address) {
+      return
+    }
+
+    await navigator.clipboard.writeText(
+      address,
+    )
+  }
+
+  const renderNavButton = (
+    page: Page,
+    label: string,
+  ) => {
+    return (
+      <button
+        type="button"
+        className={
+          activePage === page
+            ? 'nav-item active'
+            : 'nav-item'
+        }
+        onClick={() =>
+          setActivePage(page)
+        }
+      >
+        {label}
+      </button>
+    )
+  }
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark">A</div>
-          <span>ArcBatch</span>
-        </div>
+        <button
+          type="button"
+          className="brand"
+          onClick={() =>
+            setActivePage('home')
+          }
+          style={{
+            border: 0,
+            background: 'transparent',
+            padding: 0,
+          }}
+        >
+          <span className="brand-mark">
+            A
+          </span>
+
+          <span>
+            ArcBatch
+          </span>
+        </button>
 
         <nav className="nav-links">
-          <button className="nav-item active">Home</button>
-          <button className="nav-item">Batches</button>
-          <button className="nav-item">Recipients</button>
-          <button className="nav-item">Settings</button>
+          {renderNavButton(
+            'home',
+            'Home',
+          )}
+
+          {renderNavButton(
+            'batches',
+            'Batches',
+          )}
+
+          {renderNavButton(
+            'recipients',
+            'Recipients',
+          )}
+
+          {renderNavButton(
+            'settings',
+            'Settings',
+          )}
         </nav>
 
         <div className="topbar-actions">
           <div className="network-pill">
             <span className="network-dot" />
+
             Arc Testnet
           </div>
 
@@ -30,126 +142,253 @@ function App() {
         </div>
       </header>
 
-      <main className="dashboard">
-        <section className="main-column">
-          <div className="intro">
-            <h1>
-              Batch payments, <span>simplified.</span>
-            </h1>
+      {activePage === 'home' && (
+        <div className="dashboard">
+          <main className="main-column">
+            <section className="intro">
+              <h1>
+                Batch payments,{' '}
+                <span>
+                  simplified.
+                </span>
+              </h1>
 
-            <p>
-              Send USDC to multiple recipients on Arc in one
-              streamlined transaction.
-            </p>
+              <p>
+                Send USDC to multiple
+                recipients on Arc in one
+                streamlined transaction.
+              </p>
 
-            <div className="benefits">
-              <div className="benefit">
-                <div className="benefit-icon">⚡</div>
+              <div className="benefits">
+                <div className="benefit">
+                  <div className="benefit-icon">
+                    ⚡
+                  </div>
+
+                  <div>
+                    <strong>
+                      One transaction
+                    </strong>
+
+                    <span>
+                      Multiple recipients
+                    </span>
+                  </div>
+                </div>
+
+                <div className="benefit">
+                  <div className="benefit-icon">
+                    ◇
+                  </div>
+
+                  <div>
+                    <strong>
+                      Lower costs
+                    </strong>
+
+                    <span>
+                      Save on fees
+                    </span>
+                  </div>
+                </div>
+
+                <div className="benefit">
+                  <div className="benefit-icon">
+                    👥
+                  </div>
+
+                  <div>
+                    <strong>
+                      Built for everyone
+                    </strong>
+
+                    <span>
+                      Teams, communities,
+                      creators
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <BatchPaymentForm />
+
+            <RecentBatches />
+          </main>
+
+          <aside className="sidebar">
+            <section className="card wallet-card">
+              <div className="sidebar-title">
                 <div>
-                  <strong>One transaction</strong>
-                  <span>Multiple recipients</span>
+                  <span className="section-icon">
+                    ▣
+                  </span>
+
+                  <h3>
+                    Wallet & Balance
+                  </h3>
+                </div>
+
+                {isConnected && (
+                  <span className="status-badge">
+                    Connected
+                  </span>
+                )}
+              </div>
+
+              <UsdcBalance />
+
+              {isConnected &&
+                address && (
+                  <div className="sidebar-buttons">
+                    <a
+                      className="outline-button"
+                      href={`${ARC_EXPLORER_URL}/address/${address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on Explorer
+                    </a>
+
+                    <button
+                      type="button"
+                      className="outline-button"
+                      onClick={
+                        copyAddress
+                      }
+                    >
+                      Copy Address
+                    </button>
+                  </div>
+                )}
+            </section>
+
+            <section className="card network-card">
+              <div className="sidebar-title">
+                <div>
+                  <span className="section-icon">
+                    ⌁
+                  </span>
+
+                  <h3>
+                    Network
+                  </h3>
+                </div>
+
+                <span className="testnet-badge">
+                  Testnet
+                </span>
+              </div>
+
+              <div className="network-row">
+                <span>
+                  Network
+                </span>
+
+                <strong>
+                  Arc Testnet
+                </strong>
+              </div>
+
+              <div className="network-row">
+                <span>
+                  USDC Address
+                </span>
+
+                <code>
+                  {shortenAddress(
+                    USDC_ADDRESS,
+                  )}
+                </code>
+              </div>
+
+              <div className="network-row">
+                <span>
+                  RPC URL
+                </span>
+
+                <strong>
+                  Arc Testnet RPC
+                </strong>
+              </div>
+            </section>
+
+            <section className="card faucet-card">
+              <div className="faucet-content">
+                <div className="benefit-icon">
+                  💡
+                </div>
+
+                <div>
+                  <h3>
+                    Need test USDC?
+                  </h3>
+
+                  <p>
+                    Get test USDC from the
+                    Circle Faucet for
+                    development.
+                  </p>
                 </div>
               </div>
 
-              <div className="benefit">
-                <div className="benefit-icon">◈</div>
-                <div>
-                  <strong>Lower costs</strong>
-                  <span>Save on fees</span>
-                </div>
-              </div>
+              <a
+                className="outline-button faucet-link"
+                href={
+                  CIRCLE_FAUCET_URL
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open Circle Faucet
+              </a>
+            </section>
+          </aside>
+        </div>
+      )}
 
-              <div className="benefit">
-                <div className="benefit-icon">👥</div>
-                <div>
-                  <strong>Built for everyone</strong>
-                  <span>Teams, communities, creators</span>
-                </div>
-              </div>
-            </div>
+      {activePage ===
+        'batches' && (
+          <div className="page-content">
+            <RecentBatches />
           </div>
+        )}
 
-          <BatchPaymentForm />
+      {activePage ===
+        'recipients' && (
+          <div className="page-content">
+            <Recipients />
+          </div>
+        )}
 
-          <RecentBatches />
-        </section>
+      {activePage ===
+        'settings' && (
+          <div className="page-content">
+            <section className="card payment-card">
+              <div className="card-header">
+                <div>
+                  <span className="section-icon">
+                    ⚙
+                  </span>
 
-        <aside className="sidebar">
-          <section className="card wallet-card">
-            <div className="sidebar-title">
-              <div>
-                <span className="section-icon">▣</span>
-                <h3>Wallet & Balance</h3>
+                  <h2>
+                    Settings
+                  </h2>
+                </div>
               </div>
 
-              <span className="status-badge">Connected</span>
-            </div>
-
-            <UsdcBalance />
-
-            <div className="sidebar-buttons">
-              <button className="outline-button">
-                View on Explorer
-              </button>
-
-              <button className="outline-button">
-                Copy Address
-              </button>
-            </div>
-          </section>
-
-          <section className="card network-card">
-            <div className="sidebar-title">
-              <div>
-                <span className="section-icon">⌁</span>
-                <h3>Network</h3>
+              <div
+                style={{
+                  paddingTop: '20px',
+                  color: '#64748b',
+                }}
+              >
+                Settings will be added in
+                the next step.
               </div>
-
-              <span className="testnet-badge">Testnet</span>
-            </div>
-
-            <div className="network-row">
-              <span>Network</span>
-              <strong>Arc Testnet</strong>
-            </div>
-
-            <div className="network-row">
-              <span>USDC Address</span>
-              <code>0x3600...0000</code>
-            </div>
-
-            <div className="network-row">
-              <span>RPC URL</span>
-              <code>Arc Testnet RPC</code>
-            </div>
-          </section>
-
-          <section className="card faucet-card">
-            <div className="faucet-content">
-              <div className="benefit-icon">💡</div>
-
-              <div>
-                <h3>Need test USDC?</h3>
-                <p>
-                  Get test USDC from the Circle Faucet for
-                  development.
-                </p>
-              </div>
-            </div>
-
-            <a
-              className="outline-button faucet-link"
-              href="https://faucet.circle.com/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open Circle Faucet
-            </a>
-          </section>
-        </aside>
-      </main>
+            </section>
+          </div>
+        )}
     </div>
   )
 }
-
-export default App

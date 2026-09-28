@@ -2,6 +2,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type ChangeEvent,
 } from 'react'
 
 import {
@@ -25,6 +26,11 @@ import {
   USDC_DECIMALS,
 } from '../config/tokens'
 
+import {
+  RECIPIENTS_STORAGE_KEY,
+  type SavedRecipient,
+} from '../types/recipient'
+
 type Recipient = {
   id: number
   address: string
@@ -34,6 +40,11 @@ type Recipient = {
 export default function BatchPaymentForm() {
   const queryClient =
     useQueryClient()
+
+  const [
+    savedRecipients,
+    setSavedRecipients,
+  ] = useState<SavedRecipient[]>([])
 
   const [
     recipients,
@@ -46,66 +57,157 @@ export default function BatchPaymentForm() {
     },
   ])
 
-  const addRecipient = () => {
-    setRecipients((current) => {
-      if (current.length >= 100) {
-        alert(
-          'A batch can contain a maximum of 100 recipients.',
-        )
+  /*
+   * Load saved recipients.
+   */
+  useEffect(() => {
+    const loadSavedRecipients =
+      () => {
+        const saved =
+          localStorage.getItem(
+            RECIPIENTS_STORAGE_KEY,
+          )
 
-        return current
+        if (!saved) {
+          setSavedRecipients([])
+          return
+        }
+
+        try {
+          const parsed =
+            JSON.parse(
+              saved,
+            ) as SavedRecipient[]
+
+          setSavedRecipients(
+            parsed,
+          )
+        } catch {
+          setSavedRecipients([])
+        }
       }
 
-      return [
-        ...current,
-        {
-          id: Date.now(),
-          address: '',
-          amount: '',
-        },
-      ]
-    })
+    loadSavedRecipients()
+
+    window.addEventListener(
+      'focus',
+      loadSavedRecipients,
+    )
+
+    window.addEventListener(
+      'storage',
+      loadSavedRecipients,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'focus',
+        loadSavedRecipients,
+      )
+
+      window.removeEventListener(
+        'storage',
+        loadSavedRecipients,
+      )
+    }
+  }, [])
+
+  const addRecipient = () => {
+    setRecipients(
+      (current) => {
+        if (
+          current.length >=
+          100
+        ) {
+          alert(
+            'A batch can contain a maximum of 100 recipients.',
+          )
+
+          return current
+        }
+
+        return [
+          ...current,
+          {
+            id: Date.now(),
+            address: '',
+            amount: '',
+          },
+        ]
+      },
+    )
   }
 
   const removeRecipient = (
     id: number,
   ) => {
-    setRecipients((current) => {
-      if (current.length === 1) {
-        return current
-      }
+    setRecipients(
+      (current) => {
+        if (
+          current.length ===
+          1
+        ) {
+          return current
+        }
 
-      return current.filter(
-        (recipient) =>
-          recipient.id !== id,
-      )
-    })
+        return current.filter(
+          (recipient) =>
+            recipient.id !==
+            id,
+        )
+      },
+    )
   }
 
   const updateRecipient = (
     id: number,
-    field: 'address' | 'amount',
+    field:
+      | 'address'
+      | 'amount',
     value: string,
   ) => {
-    setRecipients((current) =>
-      current.map((recipient) =>
-        recipient.id === id
-          ? {
-            ...recipient,
-            [field]: value,
-          }
-          : recipient,
-      ),
+    setRecipients(
+      (current) =>
+        current.map(
+          (recipient) =>
+            recipient.id === id
+              ? {
+                ...recipient,
+                [field]:
+                  value,
+              }
+              : recipient,
+        ),
     )
   }
+
+  const handleSavedRecipientChange =
+    (
+      recipientId: number,
+      address: string,
+    ) => {
+      if (!address) {
+        return
+      }
+
+      updateRecipient(
+        recipientId,
+        'address',
+        address,
+      )
+    }
+
   const handleCsvClick = () => {
     document
-      .getElementById('csv-file-input')
+      .getElementById(
+        'csv-file-input',
+      )
       ?.click()
   }
 
   const handleCsvFile = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event:
+      ChangeEvent<HTMLInputElement>,
   ) => {
     const file =
       event.target.files?.[0]
@@ -114,11 +216,9 @@ export default function BatchPaymentForm() {
       return
     }
 
-    /*
-     * Validate file type.
-     */
     const isCsvFile =
-      file.type === 'text/csv' ||
+      file.type ===
+      'text/csv' ||
       file.name
         .toLowerCase()
         .endsWith('.csv')
@@ -128,7 +228,9 @@ export default function BatchPaymentForm() {
         'Invalid file type. Please select a CSV file.',
       )
 
-      event.target.value = ''
+      event.target.value =
+        ''
+
       return
     }
 
@@ -140,53 +242,48 @@ export default function BatchPaymentForm() {
         reader.result
 
       if (
-        typeof text !== 'string'
+        typeof text !==
+        'string'
       ) {
         alert(
           'Unable to read the CSV file.',
         )
 
-        event.target.value = ''
+        event.target.value =
+          ''
+
         return
       }
 
-      /*
-       * Support:
-       * Windows: \r\n
-       * Linux:   \n
-       * Old Mac: \r
-       */
       const lines =
         text
-          .split(/\r\n|\n|\r/)
-          .map((line) =>
-            line.trim(),
+          .split(
+            /\r\n|\n|\r/,
+          )
+          .map(
+            (line) =>
+              line.trim(),
           )
           .filter(
             (line) =>
-              line.length > 0,
+              line.length >
+              0,
           )
 
-      /*
-       * Empty CSV.
-       */
       if (
-        lines.length === 0
+        lines.length ===
+        0
       ) {
         alert(
           'CSV file is empty.',
         )
 
-        event.target.value = ''
+        event.target.value =
+          ''
+
         return
       }
 
-      /*
-       * Read header first.
-       *
-       * Remove UTF-8 BOM if Excel
-       * added one to the file.
-       */
       const header =
         lines[0]
           .replace(
@@ -195,8 +292,9 @@ export default function BatchPaymentForm() {
           )
           .toLowerCase()
           .split(',')
-          .map((value) =>
-            value.trim(),
+          .map(
+            (value) =>
+              value.trim(),
           )
 
       const addressIndex =
@@ -209,34 +307,32 @@ export default function BatchPaymentForm() {
           'amount',
         )
 
-      /*
-       * Check columns BEFORE checking
-       * whether recipient rows exist.
-       */
       if (
-        addressIndex === -1 ||
+        addressIndex ===
+        -1 ||
         amountIndex === -1
       ) {
         alert(
           'CSV must contain "address" and "amount" columns.',
         )
 
-        event.target.value = ''
+        event.target.value =
+          ''
+
         return
       }
 
-      /*
-       * Correct header exists,
-       * but there are no recipients.
-       */
       if (
-        lines.length === 1
+        lines.length ===
+        1
       ) {
         alert(
           'CSV must contain at least one recipient row.',
         )
 
-        event.target.value = ''
+        event.target.value =
+          ''
+
         return
       }
 
@@ -249,12 +345,10 @@ export default function BatchPaymentForm() {
       const seenAddresses =
         new Set<string>()
 
-      /*
-       * Process each CSV row.
-       */
       for (
         let index = 1;
-        index < lines.length;
+        index <
+        lines.length;
         index++
       ) {
         const rowNumber =
@@ -263,19 +357,21 @@ export default function BatchPaymentForm() {
         const columns =
           lines[index]
             .split(',')
-            .map((value) =>
-              value.trim(),
+            .map(
+              (value) =>
+                value.trim(),
             )
 
         const address =
-          columns[addressIndex] ?? ''
+          columns[
+          addressIndex
+          ] ?? ''
 
         const amount =
-          columns[amountIndex] ?? ''
+          columns[
+          amountIndex
+          ] ?? ''
 
-        /*
-         * Address validation.
-         */
         if (!address) {
           errors.push(
             `Row ${rowNumber}: wallet address is missing.`,
@@ -296,9 +392,6 @@ export default function BatchPaymentForm() {
           continue
         }
 
-        /*
-         * Duplicate address validation.
-         */
         const normalizedAddress =
           address.toLowerCase()
 
@@ -314,9 +407,6 @@ export default function BatchPaymentForm() {
           continue
         }
 
-        /*
-         * Amount required.
-         */
         if (!amount) {
           errors.push(
             `Row ${rowNumber}: amount is missing.`,
@@ -325,20 +415,6 @@ export default function BatchPaymentForm() {
           continue
         }
 
-        /*
-         * Only normal decimal values.
-         *
-         * Valid:
-         * 1
-         * 1.5
-         * 0.25
-         * 10.123456
-         *
-         * Invalid:
-         * -1
-         * abc
-         * 1e5
-         */
         const amountFormat =
           /^\d+(\.\d{1,6})?$/
 
@@ -370,31 +446,25 @@ export default function BatchPaymentForm() {
           continue
         }
 
-        /*
-         * Address is valid and
-         * amount is valid.
-         */
         seenAddresses.add(
           normalizedAddress,
         )
 
-        importedRecipients.push({
-          id:
-            Date.now() +
-            index,
+        importedRecipients.push(
+          {
+            id:
+              Date.now() +
+              index,
 
-          address,
-
-          amount,
-        })
+            address,
+            amount,
+          },
+        )
       }
 
-      /*
-       * No valid recipients.
-       */
       if (
-        importedRecipients.length ===
-        0
+        importedRecipients
+          .length === 0
       ) {
         alert(
           errors.length > 0
@@ -404,37 +474,30 @@ export default function BatchPaymentForm() {
             : 'No valid recipients found.',
         )
 
-        event.target.value = ''
+        event.target.value =
+          ''
+
         return
       }
 
-      /*
-       * Smart contract maximum.
-       */
       if (
-        importedRecipients.length >
-        100
+        importedRecipients
+          .length > 100
       ) {
         alert(
           'A batch can contain a maximum of 100 recipients.',
         )
 
-        event.target.value = ''
+        event.target.value =
+          ''
+
         return
       }
 
-      /*
-       * Put imported recipients
-       * into the payment table.
-       */
       setRecipients(
         importedRecipients,
       )
 
-      /*
-       * Some valid rows +
-       * some invalid rows.
-       */
       if (
         errors.length > 0
       ) {
@@ -445,27 +508,31 @@ export default function BatchPaymentForm() {
         )
       }
 
-      /*
-       * Clear input so the same
-       * CSV can be selected again.
-       */
-      event.target.value = ''
+      event.target.value =
+        ''
     }
 
-    reader.onerror = () => {
-      alert(
-        'Unable to read the CSV file.',
-      )
+    reader.onerror =
+      () => {
+        alert(
+          'Unable to read the CSV file.',
+        )
 
-      event.target.value = ''
-    }
+        event.target.value =
+          ''
+      }
 
-    reader.readAsText(file)
+    reader.readAsText(
+      file,
+    )
   }
 
   const hasErrors =
     recipients.some(
-      (recipient, index) => {
+      (
+        recipient,
+        index,
+      ) => {
         const amount =
           Number(
             recipient.amount,
@@ -477,8 +544,10 @@ export default function BatchPaymentForm() {
               otherRecipient,
               otherIndex,
             ) =>
-              otherIndex !== index &&
-              recipient.address !== '' &&
+              otherIndex !==
+              index &&
+              recipient.address !==
+              '' &&
               otherRecipient.address
                 .toLowerCase() ===
               recipient.address
@@ -525,7 +594,9 @@ export default function BatchPaymentForm() {
         },
         0,
       )
-    }, [recipients])
+    }, [
+      recipients,
+    ])
 
   const requiredAmount =
     useMemo(() => {
@@ -539,7 +610,9 @@ export default function BatchPaymentForm() {
       } catch {
         return 0n
       }
-    }, [totalAmount])
+    }, [
+      totalAmount,
+    ])
 
   const {
     needsApproval,
@@ -563,7 +636,8 @@ export default function BatchPaymentForm() {
 
     transactionHash,
 
-    error: batchError,
+    error:
+    batchError,
 
     isPending:
     isBatchPending,
@@ -578,10 +652,6 @@ export default function BatchPaymentForm() {
     resetBatchTransaction,
   } = useBatchPayment()
 
-  /*
-   * Refresh USDC allowance
-   * after approval confirms.
-   */
   useEffect(() => {
     if (
       !isApprovalConfirmed
@@ -595,13 +665,6 @@ export default function BatchPaymentForm() {
     refetchAllowance,
   ])
 
-  /*
-   * Successful batch transaction.
-   *
-   * Refresh blockchain data,
-   * tell RecentBatches to reload,
-   * then reset the form.
-   */
   useEffect(() => {
     if (
       !isBatchConfirmed ||
@@ -615,10 +678,6 @@ export default function BatchPaymentForm() {
 
     refetchAllowance()
 
-    /*
-     * Tell useRecentBatches()
-     * that a new batch was confirmed.
-     */
     window.dispatchEvent(
       new CustomEvent(
         'arcbatch-batch-created',
@@ -753,7 +812,8 @@ export default function BatchPaymentForm() {
                   otherRecipient,
                   otherIndex,
                 ) =>
-                  otherIndex !== index &&
+                  otherIndex !==
+                  index &&
                   otherRecipient.address
                     .toLowerCase() ===
                   recipient.address
@@ -767,30 +827,84 @@ export default function BatchPaymentForm() {
                   recipient.id
                 }
               >
-                <span>
+                <span className="payment-row-number">
                   {index + 1}
                 </span>
 
                 <div className="field-wrapper">
-                  <input
-                    type="text"
-                    placeholder="0x..."
-                    value={recipient.address}
-                    disabled={isBusy}
-                    className={
-                      addressInvalid ||
-                        duplicateAddress
-                        ? 'input-error'
-                        : ''
-                    }
-                    onChange={(event) =>
-                      updateRecipient(
-                        recipient.id,
-                        'address',
-                        event.target.value,
-                      )
-                    }
-                  />
+                  <div className="recipient-address-group">
+                    <input
+                      type="text"
+                      placeholder="0x..."
+                      value={
+                        recipient.address
+                      }
+                      disabled={
+                        isBusy
+                      }
+                      className={
+                        addressInvalid ||
+                          duplicateAddress
+                          ? 'input-error'
+                          : ''
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        updateRecipient(
+                          recipient.id,
+                          'address',
+                          event
+                            .target
+                            .value,
+                        )
+                      }
+                    />
+
+                    {savedRecipients.length >
+                      0 && (
+                        <select
+                          className="saved-recipient-select"
+                          value=""
+                          disabled={
+                            isBusy
+                          }
+                          onChange={(
+                            event,
+                          ) =>
+                            handleSavedRecipientChange(
+                              recipient.id,
+                              event
+                                .target
+                                .value,
+                            )
+                          }
+                        >
+                          <option value="">
+                            Saved
+                          </option>
+
+                          {savedRecipients.map(
+                            (
+                              saved,
+                            ) => (
+                              <option
+                                key={
+                                  saved.id
+                                }
+                                value={
+                                  saved.address
+                                }
+                              >
+                                {
+                                  saved.name
+                                }
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      )}
+                  </div>
 
                   {addressInvalid && (
                     <span className="field-error">
@@ -813,18 +927,26 @@ export default function BatchPaymentForm() {
                       min="0"
                       step="0.01"
                       placeholder="0.00"
-                      value={recipient.amount}
-                      disabled={isBusy}
+                      value={
+                        recipient.amount
+                      }
+                      disabled={
+                        isBusy
+                      }
                       className={
                         amountInvalid
                           ? 'input-error'
                           : ''
                       }
-                      onChange={(event) =>
+                      onChange={(
+                        event,
+                      ) =>
                         updateRecipient(
                           recipient.id,
                           'amount',
-                          event.target.value,
+                          event
+                            .target
+                            .value,
                         )
                       }
                     />
@@ -836,7 +958,8 @@ export default function BatchPaymentForm() {
 
                   {amountInvalid && (
                     <span className="field-error">
-                      Amount must be greater than 0
+                      Amount must be
+                      greater than 0
                     </span>
                   )}
                 </div>
@@ -874,7 +997,8 @@ export default function BatchPaymentForm() {
             className="outline-button"
             disabled={
               isBusy ||
-              recipients.length >= 100
+              recipients.length >=
+              100
             }
             onClick={
               addRecipient
@@ -895,6 +1019,7 @@ export default function BatchPaymentForm() {
           >
             Import CSV
           </button>
+
           <input
             id="csv-file-input"
             type="file"
