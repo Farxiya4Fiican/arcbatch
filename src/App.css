@@ -1667,3 +1667,17 @@ button {
 .settings-link:hover {
   text-decoration: underline;
 }
+
+.settings-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.settings-card {
+  width: 100%;
+}
+
+.settings-header {
+  margin-bottom: 4px;
+}

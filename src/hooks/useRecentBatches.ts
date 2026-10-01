@@ -518,9 +518,7 @@ export function useRecentBatches() {
                             null,
                         )
 
-                        console.log(
-                            'Loaded batch history from RPC fallback.',
-                        )
+
                     } catch (
                     fallbackError
                     ) {
