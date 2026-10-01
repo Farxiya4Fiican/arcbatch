@@ -11,7 +11,7 @@ if (!alchemyApiKey) {
   )
 }
 
-const arcRpcUrl =
+export const arcRpcUrl =
   `https://arc-testnet.g.alchemy.com/v2/${alchemyApiKey}`
 
 export const arcTestnet = defineChain({
