@@ -13,6 +13,7 @@ import ConnectWallet from './components/ConnectWallet'
 import RecentBatches from './components/RecentBatches'
 import Recipients from './components/Recipients'
 import UsdcBalance from './components/UsdcBalance'
+import Settings from './components/Settings'
 
 import {
   USDC_ADDRESS,
@@ -364,29 +365,9 @@ export default function App() {
       {activePage ===
         'settings' && (
           <div className="page-content">
-            <section className="card payment-card">
-              <div className="card-header">
-                <div>
-                  <span className="section-icon">
-                    ⚙
-                  </span>
-
-                  <h2>
-                    Settings
-                  </h2>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  paddingTop: '20px',
-                  color: '#64748b',
-                }}
-              >
-                Settings will be added in
-                the next step.
-              </div>
-            </section>
+            <div className="page-content">
+              <Settings />
+            </div>
           </div>
         )}
     </div>
