@@ -640,43 +640,23 @@ This keeps the hackathon MVP simple and does not require a backend database.
 A future version could synchronize recipients using a cloud database.
 
 ---
-
 ## Screenshots
 
-Create this folder:
-
-```text
-screenshots/
-```
-
-Recommended screenshots:
-
-```text
-screenshots/home.png
-screenshots/batches.png
-screenshots/recipients.png
-screenshots/settings.png
-```
-
-Then add:
-
-```md
 ### Home
 
-![ArcBatch Home](./screenshots/home.png)
+![ArcBatch Home](./screenshots/Home.PNG)
 
 ### Recent Batches
 
-![Recent Batches](./screenshots/batches.png)
+![Recent Batches](./screenshots/batches.PNG)
 
 ### Recipients
 
-![Recipients](./screenshots/recipients.png)
+![Recipients](./screenshots/recipients.PNG)
 
 ### Settings
 
-![Settings](./screenshots/settings.png)
-```
+![Settings](./screenshots/settings.PNG)
 
 ---
 
