@@ -5,7 +5,7 @@ import {
 
 import { batchPaymentAbi } from '../contracts/batchPaymentAbi'
 import { BATCH_PAYMENT_ADDRESS } from '../config/contracts'
-import { arcTestnet } from '../config/wagmi'
+import { arcMainnet } from '../config/wagmi'
 
 export function useBatchPayment() {
     const {
@@ -23,7 +23,7 @@ export function useBatchPayment() {
         isSuccess: isConfirmed,
     } = useWaitForTransactionReceipt({
         hash: transactionHash,
-        chainId: arcTestnet.id,
+        chainId: arcMainnet.id,
         confirmations: 1,
         query: {
             enabled: Boolean(transactionHash),
@@ -42,7 +42,7 @@ export function useBatchPayment() {
                 recipients,
                 amounts,
             ],
-            chainId: arcTestnet.id,
+            chainId: arcMainnet.id,
         })
     }
 

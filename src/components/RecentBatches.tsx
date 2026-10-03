@@ -11,7 +11,7 @@ import {
 } from '../config/contracts'
 
 const ARC_EXPLORER_URL =
-    'https://explorer.testnet.arc.io'
+    'https://explorer.arc.io'
 
 export default function RecentBatches() {
     const {

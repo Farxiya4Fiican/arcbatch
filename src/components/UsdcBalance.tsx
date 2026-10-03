@@ -6,7 +6,7 @@ import {
   USDC_ADDRESS,
   USDC_DECIMALS,
 } from '../config/tokens'
-import { arcTestnet } from '../config/wagmi'
+import { arcMainnet } from '../config/wagmi'
 
 export default function UsdcBalance() {
   const {
@@ -24,12 +24,12 @@ export default function UsdcBalance() {
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    chainId: arcTestnet.id,
+    chainId: arcMainnet.id,
     query: {
       enabled:
         isConnected &&
         Boolean(address) &&
-        chainId === arcTestnet.id,
+        chainId === arcMainnet.id,
     },
   })
 
@@ -37,11 +37,11 @@ export default function UsdcBalance() {
     return null
   }
 
-  if (chainId !== arcTestnet.id) {
+  if (chainId !== arcMainnet.id) {
     return (
       <div className="balance-card">
         <span className="balance-label">
-          Arc Testnet balance
+          Arc Mainnet balance
         </span>
 
         <strong>Switch network to view balance</strong>
@@ -53,7 +53,7 @@ export default function UsdcBalance() {
     return (
       <div className="balance-card">
         <span className="balance-label">
-          Arc Testnet balance
+          Arc Mainnet balance
         </span>
 
         <strong>Loading...</strong>
@@ -61,21 +61,21 @@ export default function UsdcBalance() {
     )
   }
 
-if (error) {
-  return (
-    <div className="balance-card">
-      <span className="balance-label">
-        Arc Testnet balance
-      </span>
+  if (error) {
+    return (
+      <div className="balance-card">
+        <span className="balance-label">
+          Arc Mainnet balance
+        </span>
 
-      <strong>Unable to load balance</strong>
+        <strong>Unable to load balance</strong>
 
-      <span className="balance-error">
-        {error.message}
-      </span>
-    </div>
-  )
-}
+        <span className="balance-error">
+          {error.message}
+        </span>
+      </div>
+    )
+  }
   const formattedBalance =
     balance !== undefined
       ? formatUnits(balance, USDC_DECIMALS)
@@ -84,7 +84,7 @@ if (error) {
   return (
     <div className="balance-card">
       <span className="balance-label">
-        Arc Testnet balance
+        Arc Mainnet balance
       </span>
 
       <strong>

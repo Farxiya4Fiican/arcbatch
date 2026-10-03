@@ -7,7 +7,7 @@ import {
 } from '../config/tokens'
 
 import {
-    arcTestnet,
+    arcMainnet,
 } from '../config/wagmi'
 
 import {
@@ -16,7 +16,7 @@ import {
 } from '../config/contracts'
 
 const ARC_EXPLORER_URL =
-    'https://explorer.testnet.arc.io'
+    'https://explorer.arc.io'
 
 export default function Settings() {
     const {
@@ -74,7 +74,7 @@ export default function Settings() {
                         </span>
 
                         <strong>
-                            Arc Testnet
+                            Arc Mainnet
                         </strong>
                     </div>
 
@@ -84,7 +84,7 @@ export default function Settings() {
                         </span>
 
                         <strong>
-                            {arcTestnet.id}
+                            {arcMainnet.id}
                         </strong>
                     </div>
 
@@ -120,7 +120,7 @@ export default function Settings() {
                         </span>
 
                         <span className="testnet-badge">
-                            Testnet
+                            Mainnet
                         </span>
                     </div>
                 </div>
@@ -177,7 +177,7 @@ export default function Settings() {
                         </span>
 
                         <strong>
-                            Arc Testnet
+                            Arc Mainnet
                         </strong>
                     </div>
 

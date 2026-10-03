@@ -1,8 +1,8 @@
 # ArcBatch
 
-ArcBatch is a non-custodial batch USDC payment application built on the Arc Network Testnet.
+ArcBatch is a non-custodial batch USDC payment application built on Arc Mainnet.
 
-It allows users to send USDC to multiple recipients in one blockchain transaction.
+It allows users to send USDC to multiple recipients in a single blockchain transaction.
 
 Built for hackathon submission.
 
@@ -10,7 +10,7 @@ Built for hackathon submission.
 
 ## Live Demo
 
-[https://arcbatch.vercel.app](https://arcbatch.vercel.app)
+https://arcbatch.vercel.app
 
 ---
 
@@ -18,15 +18,13 @@ Built for hackathon submission.
 
 **Name:** Farhia Adam
 
- 
-
 ---
 
 ## Overview
 
 Sending payments to many people one by one is slow, repetitive, and inconvenient.
 
-ArcBatch simplifies this process by allowing a user to:
+ArcBatch simplifies this process by allowing users to:
 
 - Connect a crypto wallet
 - Add multiple recipients
@@ -34,8 +32,10 @@ ArcBatch simplifies this process by allowing a user to:
 - Approve USDC
 - Send all payments in one transaction
 - View recent batch payment history
+- Save frequently used recipients
+- Import recipients from CSV
 
-The application is designed for:
+ArcBatch can be useful for:
 
 - Teams
 - Communities
@@ -49,7 +49,7 @@ The application is designed for:
 
 ## Problem
 
-Organizations and individuals sometimes need to send the same token to many recipients.
+Organizations and individuals sometimes need to send USDC to many recipients.
 
 Normally, this requires creating separate blockchain transactions for every recipient.
 
@@ -69,7 +69,7 @@ This creates:
 - More transaction overhead
 - More time spent processing payments
 
-ArcBatch combines the recipients into one batch transaction.
+ArcBatch combines multiple payments into one batch transaction.
 
 ```text
 One transaction
@@ -86,7 +86,7 @@ Recipient 4
 
 ArcBatch uses a smart contract to process multiple USDC transfers atomically.
 
-The user enters:
+The user provides:
 
 ```text
 Recipient address
@@ -101,7 +101,7 @@ The frontend then calls:
 batchPay(address[] recipients, uint256[] amounts)
 ```
 
-The smart contract transfers USDC from the sender directly to each recipient.
+The smart contract transfers USDC directly from the sender to each recipient.
 
 ArcBatch does not custody user funds.
 
@@ -115,7 +115,7 @@ Send USDC to multiple recipients in one transaction.
 
 ### Dynamic Recipient Rows
 
-Users can add or remove recipient rows dynamically.
+Users can dynamically add and remove payment recipients.
 
 ### Saved Recipients
 
@@ -125,7 +125,7 @@ Saved recipients are currently stored in browser `localStorage`.
 
 ### CSV Import
 
-Users can upload a CSV file containing recipients and amounts.
+Users can upload a CSV file containing recipient addresses and amounts.
 
 Example:
 
@@ -140,15 +140,16 @@ ArcBatch validates:
 
 - Wallet addresses
 - Amounts
-- Duplicate addresses
+- Duplicate recipients
 - Maximum recipient count
 - USDC decimal precision
+- Invalid CSV structure
 
 ### USDC Approval
 
-ArcBatch checks the user's current allowance before sending the batch.
+ArcBatch checks the user's current USDC allowance before sending a batch.
 
-If approval is required, the user can approve the BatchPayment contract.
+If additional allowance is required, the user can approve the BatchPayment contract.
 
 ### Recent Batch History
 
@@ -158,23 +159,19 @@ ArcBatch displays recent batch payments including:
 - Number of recipients
 - Total USDC
 - Transaction status
-- Contract
+- Contract address
 - Transaction hash
 
 ### Resilient History Loading
 
-ArcBatch normally attempts to retrieve history from Arcscan.
-
-If Arcscan is unavailable, the application falls back to Alchemy RPC infrastructure.
-
-This helps keep batch history available even when the explorer API is temporarily unavailable.
+ArcBatch uses blockchain history services with an Alchemy RPC fallback to keep transaction history available if the primary history service is unavailable.
 
 ### Wallet Information
 
 The application displays:
 
 - Connected wallet
-- Arc Testnet USDC balance
+- Arc Mainnet USDC balance
 - Network status
 - Explorer links
 
@@ -182,9 +179,9 @@ The application displays:
 
 Users can:
 
-- Add recipients
-- Edit recipients
-- Delete recipients
+- Add saved recipients
+- Edit saved recipients
+- Delete saved recipients
 - Select saved recipients while creating a batch
 
 ### Settings
@@ -220,7 +217,7 @@ The Settings page displays:
 
 ### Blockchain
 
-- Arc Network Testnet
+- Arc Mainnet
 
 ### Token
 
@@ -228,22 +225,22 @@ The Settings page displays:
 
 ### RPC
 
-- Alchemy Arc Testnet RPC
+- Alchemy Arc Mainnet RPC
 
 ---
 
-## Arc Testnet
+## Arc Mainnet
 
 ### Chain ID
 
 ```text
-5042002
+5042
 ```
 
 ### Network
 
 ```text
-Arc Testnet
+Arc Mainnet
 ```
 
 ### USDC Contract
@@ -252,31 +249,41 @@ Arc Testnet
 0x3600000000000000000000000000000000000000
 ```
 
-### USDC Decimals
+### ERC-20 USDC Decimals
 
 ```text
 6
 ```
 
+### Explorer
+
+https://explorer.arc.io
+
 ---
 
 ## Deployed BatchPayment Contract
 
-```text
-0xcb0a19E2F3c3abFdC74d612c54f55adD0cAcAE3d
-```
-
-Deployment block:
+### Contract Address
 
 ```text
-64092675
+0x22c989f9c4bBeABD9f6E3f50BeF1f380bfD029C4
 ```
 
-Explorer:
+### Deployment Block
 
 ```text
-https://explorer.testnet.arc.io
+24013983
 ```
+
+### Deployment Transaction
+
+```text
+0x8f0c959d22cb642eaf1eeb3a96651222eb6418833e8e057ffda1538a864ba84c
+```
+
+### Explorer
+
+https://explorer.arc.io/address/0x22c989f9c4bBeABD9f6E3f50BeF1f380bfD029C4
 
 ---
 
@@ -300,18 +307,20 @@ function batchPay(
 The contract:
 
 - Validates recipient arrays
-- Prevents invalid recipient counts
+- Rejects invalid recipient addresses
+- Rejects invalid payment amounts
+- Limits the maximum batch size
 - Transfers USDC directly from the sender
-- Uses SafeERC20
-- Uses ReentrancyGuard
+- Uses OpenZeppelin `SafeERC20`
+- Uses `ReentrancyGuard`
 - Processes the batch atomically
-- Emits a BatchPaymentExecuted event
+- Emits a `BatchPaymentExecuted` event
 
 ---
 
 ## Maximum Recipients
 
-The current contract supports up to:
+The current smart contract supports up to:
 
 ```text
 100 recipients
@@ -325,7 +334,7 @@ per batch transaction.
 
 ArcBatch is non-custodial.
 
-The application does not hold user funds.
+The application never holds user funds.
 
 The payment flow is:
 
@@ -339,7 +348,7 @@ BatchPayment contract
 Recipients
 ```
 
-Funds are transferred directly from the sender to the recipients during the transaction.
+Funds are transferred directly from the sender to recipients during the transaction.
 
 ---
 
@@ -365,6 +374,7 @@ arcbatch/
 │   └── foundry.toml
 │
 ├── public/
+├── screenshots/
 ├── package.json
 └── README.md
 ```
@@ -466,13 +476,19 @@ pnpm build
 
 ## Smart Contract Development
 
-Go to the contract folder:
+Go to the contract directory:
 
 ```bash
 cd contracts
 ```
 
-Run tests:
+Build the contracts:
+
+```bash
+forge build
+```
+
+Run the tests:
 
 ```bash
 forge test
@@ -483,8 +499,10 @@ The BatchPayment contract includes tests for:
 - Successful batch payments
 - Invalid recipients
 - Invalid amounts
+- Empty batches
+- Array length mismatch
+- Insufficient allowance
 - Maximum recipients
-- Allowance handling
 - Atomic transaction behavior
 
 ---
@@ -493,20 +511,22 @@ The BatchPayment contract includes tests for:
 
 ### 1. Connect Wallet
 
-Connect MetaMask to Arc Testnet.
+Connect MetaMask to Arc Mainnet.
 
-### 2. Get Test USDC
+### 2. Fund Your Wallet
 
-Use the Circle faucet to obtain Arc Testnet USDC.
+Make sure the connected wallet has USDC on Arc Mainnet.
+
+USDC is also used for transaction fees on Arc.
 
 ### 3. Add Recipients
 
-Enter recipient wallet addresses and amounts.
+Enter recipient wallet addresses and USDC amounts.
 
 You can also:
 
 - Select saved recipients
-- Import recipients using CSV
+- Import recipients from CSV
 
 ### 4. Approve USDC
 
@@ -520,11 +540,11 @@ Click:
 Send batch
 ```
 
-Confirm the transaction in MetaMask.
+Review and confirm the transaction in your wallet.
 
 ### 6. View History
 
-After confirmation, the transaction will appear in Recent Batches.
+After confirmation, the transaction appears in Recent Batches.
 
 ---
 
@@ -563,47 +583,32 @@ ArcBatch validates:
 
 ## Batch History Architecture
 
-ArcBatch uses two history sources.
-
-Primary:
+ArcBatch uses a resilient history-loading strategy.
 
 ```text
-Arcscan API
-```
-
-Fallback:
-
-```text
-Alchemy RPC
-```
-
-Flow:
-
-```text
-Arcscan
-   ↓
+Primary history source
+        ↓
 Available?
-   ↓
-Yes → Load history
-
-No
-   ↓
-Alchemy fallback
-   ↓
-Load wallet transactions
-   ↓
-Decode batchPay()
-   ↓
-Display history
+   ↓           ↓
+ Yes          No
+   ↓           ↓
+Load       Alchemy RPC
+history      fallback
+                ↓
+         Load transactions
+                ↓
+          Decode batchPay()
+                ↓
+          Display history
 ```
 
-This improves reliability when one external service becomes unavailable.
+This improves reliability if one external history service becomes unavailable.
 
 ---
 
 ## Security
 
-ArcBatch uses several security practices.
+ArcBatch follows several security practices.
 
 ### Non-Custodial
 
@@ -611,25 +616,25 @@ The application never stores user funds.
 
 ### SafeERC20
 
-OpenZeppelin SafeERC20 is used for USDC transfers.
+OpenZeppelin `SafeERC20` is used for token transfers.
 
 ### ReentrancyGuard
 
-The payment function is protected against reentrancy.
+The batch payment function is protected against reentrancy.
 
 ### Atomic Batch
 
-If one transfer fails, the entire transaction reverts.
+If one payment in the batch fails, the entire transaction reverts.
 
 ### Maximum Batch Size
 
-The contract limits batches to 100 recipients.
+The contract limits each batch to 100 recipients.
 
 ### No Private Keys
 
 ArcBatch never requests or stores wallet private keys.
 
-Wallet signing is handled by MetaMask.
+Wallet signing is handled by the connected wallet.
 
 ---
 
@@ -643,9 +648,10 @@ localStorage
 
 This keeps the hackathon MVP simple and does not require a backend database.
 
-A future version could synchronize recipients using a cloud database.
+A future version could synchronize recipient data using a cloud database.
 
 ---
+
 ## Screenshots
 
 ### Home
@@ -691,7 +697,7 @@ Possible future improvements include:
 Implemented:
 
 - Wallet connection
-- Arc Testnet integration
+- Arc Mainnet integration
 - USDC balance
 - Dynamic recipients
 - Saved recipients
@@ -701,8 +707,7 @@ Implemented:
 - Smart contract deployment
 - Smart contract tests
 - Recent transaction history
-- Arcscan integration
-- Alchemy fallback
+- Alchemy RPC integration
 - Recipient management
 - Settings page
 - Responsive layout
@@ -713,7 +718,7 @@ Implemented:
 ## Contract Address
 
 ```text
-0xcb0a19E2F3c3abFdC74d612c54f55adD0cAcAE3d
+0x22c989f9c4bBeABD9f6E3f50BeF1f380bfD029C4
 ```
 
 ---
@@ -722,7 +727,7 @@ Implemented:
 
 **Farhia Adam**
 
-Newfarxiya@gmail.com
+newfarxiya@gmail.com
 
 Software Developer
 

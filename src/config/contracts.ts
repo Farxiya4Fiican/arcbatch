@@ -1,5 +1,5 @@
 export const BATCH_PAYMENT_ADDRESS =
-    '0xcb0a19E2F3c3abFdC74d612c54f55adD0cAcAE3d' as const
+    '0x22c989f9c4bBeABD9f6E3f50BeF1f380bfD029C4' as const
 
 export const BATCH_PAYMENT_DEPLOYMENT_BLOCK =
-    64092675n
+    24013983n

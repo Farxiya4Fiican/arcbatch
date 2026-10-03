@@ -5,7 +5,7 @@ import {
   useSwitchChain,
 } from 'wagmi'
 
-import { arcTestnet } from '../config/wagmi'
+import { arcMainnet } from '../config/wagmi'
 
 export default function ConnectWallet() {
   const {
@@ -50,19 +50,19 @@ export default function ConnectWallet() {
           </div>
         </div>
 
-        {chainId !== arcTestnet.id && (
+        {chainId !== arcMainnet.id && (
           <button
             className="btn btn-primary"
             disabled={isSwitching}
             onClick={() =>
               switchChain({
-                chainId: arcTestnet.id,
+                chainId: arcMainnet.id,
               })
             }
           >
             {isSwitching
               ? 'Switching...'
-              : 'Switch to Arc Testnet'}
+              : 'Switch to Arc Mainnet'}
           </button>
         )}
 

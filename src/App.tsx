@@ -26,10 +26,7 @@ type Page =
   | 'settings'
 
 const ARC_EXPLORER_URL =
-  'https://explorer.testnet.arc.io'
-
-const CIRCLE_FAUCET_URL =
-  'https://faucet.circle.com/'
+  'https://explorer.arc.io'
 
 export default function App() {
   const [
@@ -136,7 +133,7 @@ export default function App() {
           <div className="network-pill">
             <span className="network-dot" />
 
-            Arc Testnet
+            Arc Mainnet
           </div>
 
           <ConnectWallet />
@@ -156,8 +153,9 @@ export default function App() {
 
               <p>
                 Send USDC to multiple
-                recipients on Arc in one
-                streamlined transaction.
+                recipients on Arc Mainnet
+                in one streamlined
+                transaction.
               </p>
 
               <div className="benefits">
@@ -277,7 +275,7 @@ export default function App() {
                 </div>
 
                 <span className="testnet-badge">
-                  Testnet
+                  Mainnet
                 </span>
               </div>
 
@@ -287,7 +285,7 @@ export default function App() {
                 </span>
 
                 <strong>
-                  Arc Testnet
+                  Arc Mainnet
                 </strong>
               </div>
 
@@ -305,44 +303,13 @@ export default function App() {
 
               <div className="network-row">
                 <span>
-                  RPC URL
+                  RPC
                 </span>
 
                 <strong>
-                  Arc Testnet RPC
+                  Alchemy
                 </strong>
               </div>
-            </section>
-
-            <section className="card faucet-card">
-              <div className="faucet-content">
-                <div className="benefit-icon">
-                  💡
-                </div>
-
-                <div>
-                  <h3>
-                    Need test USDC?
-                  </h3>
-
-                  <p>
-                    Get test USDC from the
-                    Circle Faucet for
-                    development.
-                  </p>
-                </div>
-              </div>
-
-              <a
-                className="outline-button faucet-link"
-                href={
-                  CIRCLE_FAUCET_URL
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open Circle Faucet
-              </a>
             </section>
           </aside>
         </div>
@@ -365,9 +332,7 @@ export default function App() {
       {activePage ===
         'settings' && (
           <div className="page-content">
-            <div className="page-content">
-              <Settings />
-            </div>
+            <Settings />
           </div>
         )}
     </div>

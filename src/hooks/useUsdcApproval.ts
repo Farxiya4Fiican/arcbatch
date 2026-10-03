@@ -8,7 +8,7 @@ import {
 import { erc20Abi } from '../contracts/erc20Abi'
 import { USDC_ADDRESS } from '../config/tokens'
 import { BATCH_PAYMENT_ADDRESS } from '../config/contracts'
-import { arcTestnet } from '../config/wagmi'
+import { arcMainnet } from '../config/wagmi'
 
 export function useUsdcApproval(requiredAmount: bigint) {
     const { address, chainId } = useAccount()
@@ -24,11 +24,11 @@ export function useUsdcApproval(requiredAmount: bigint) {
         args: address
             ? [address, BATCH_PAYMENT_ADDRESS]
             : undefined,
-        chainId: arcTestnet.id,
+        chainId: arcMainnet.id,
         query: {
             enabled:
                 Boolean(address) &&
-                chainId === arcTestnet.id,
+                chainId === arcMainnet.id,
         },
     })
 
@@ -44,7 +44,7 @@ export function useUsdcApproval(requiredAmount: bigint) {
         isSuccess: isApprovalConfirmed,
     } = useWaitForTransactionReceipt({
         hash: approvalHash,
-        chainId: arcTestnet.id,
+        chainId: arcMainnet.id,
         query: {
             enabled: Boolean(approvalHash),
         },
@@ -68,7 +68,7 @@ export function useUsdcApproval(requiredAmount: bigint) {
                 BATCH_PAYMENT_ADDRESS,
                 requiredAmount,
             ],
-            chainId: arcTestnet.id,
+            chainId: arcMainnet.id,
         })
     }
 
